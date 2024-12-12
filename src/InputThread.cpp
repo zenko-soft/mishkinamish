@@ -137,12 +137,18 @@ int InputThread::OpenDevice(UINT device_num, HWND hdwnd) {
                     (DWORD)hInputSoundDataReady,
                     0,
                     CALLBACK_EVENT);
-  if (mres) {
-    MessageBox(hdwnd,
-               L"Формат записи 16кГц 16 бит НЕ подддерживается!",
-               L"Поддержка формата",
-               MB_OK);
-    return 1;
+  if (mres) 
+  {
+      SetWindowTextA(hdwnd, "Формат записи 16кГц 16 бит НЕ поддерживается!");
+      /*MessageBox(hdwnd,
+                   L"Формат записи 16кГц 16 бит НЕ поддерживается!",
+                   L"Поддержка формата",
+                   MB_OK);*/
+      return 1;
+  }
+  else
+  {
+      SetWindowTextA(hdwnd, "Устройство записи инициализировано");
   }
 
   // 2. Добавляем буферы
@@ -153,10 +159,10 @@ int InputThread::OpenDevice(UINT device_num, HWND hdwnd) {
 
     mres = waveInPrepareHeader(device, &WaveHeader[i], sizeof(WAVEHDR));
     if (mres) {
-      MessageBox(hdwnd,
+      /*MessageBox(hdwnd,
                  L"не отработал waveInPrepareHeader",
                  L"не отработал waveInPrepareHeader",
-                 MB_OK);
+                 MB_OK);*/
       return 1;
     }
 
