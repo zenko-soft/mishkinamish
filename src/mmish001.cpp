@@ -8,6 +8,8 @@
 #include "WAVDump.h"
 #include "WorkerThread.h"
 #include "resource.h"
+#include <fstream>
+#include <iostream>
 
 extern MModel model;
 
@@ -525,8 +527,18 @@ static BOOL CALLBACK DlgWndProc(HWND hdwnd,
       return 0;  // Если вернуть не 0, то будет плохо.
 
     case WM_INITDIALOG:
-      // 1. Уходим из верхнего левого угла
-      SetWindowPos(hdwnd, HWND_TOP, 300, 50, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+    {
+      // 1. Восстанавливаем положение окна
+      int left = 300;
+      int top = 50;
+      std::ifstream fin("window.pos");
+      if (fin && !fin.eof())
+      {
+          fin >> left;
+          fin >> top;
+          fin.close();
+      }
+      SetWindowPos(hdwnd, HWND_TOP, left, top, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
 
       // 1.5 Индикаторам требуется наш hdwnd для инициализации
       Indicators::Init(hdwnd);
@@ -537,26 +549,26 @@ static BOOL CALLBACK DlgWndProc(HWND hdwnd,
       // немедленно выпить... то есть выйти
       if (0 == iNumDevs) {
 #ifdef MMISH_ENGLISH
-        MessageBox(hdwnd,
-                   L"You need a sound recording device in the computer (e.g. "
-                   L"microphone) for the program to work!",
-                   L"No one sound recording device found",
-                   MB_OK);
+          MessageBox(hdwnd,
+              L"You need a sound recording device in the computer (e.g. "
+              L"microphone) for the program to work!",
+              L"No one sound recording device found",
+              MB_OK);
 #else
-        MessageBox(hdwnd,
-                   L"Для работы программы необходимо, чтобы в компьютере "
-                   L"работало устройство для записи звука!",
-                   L"Не найдено ни одного звукового устройства",
-                   MB_OK);
+          MessageBox(hdwnd,
+              L"Для работы программы необходимо, чтобы в компьютере "
+              L"работало устройство для записи звука!",
+              L"Не найдено ни одного звукового устройства",
+              MB_OK);
 #endif
-        EndDialog(hdwnd, 3);
-        return 1;
+          EndDialog(hdwnd, 3);
+          return 1;
       }
 
       for (i = 0; i < iNumDevs; i++) {
-        waveInGetDevCaps(i, &wic, sizeof(WAVEINCAPS));
-        SendDlgItemMessage(
-            hdwnd, IDC_COMBO_MIC, CB_ADDSTRING, 0, (LPARAM)(wic.szPname));
+          waveInGetDevCaps(i, &wic, sizeof(WAVEINCAPS));
+          SendDlgItemMessage(
+              hdwnd, IDC_COMBO_MIC, CB_ADDSTRING, 0, (LPARAM)(wic.szPname));
       }
 #ifdef MMISH_ENGLISH
       SendDlgItemMessage(
@@ -567,99 +579,99 @@ static BOOL CALLBACK DlgWndProc(HWND hdwnd,
 #endif
 
       SendDlgItemMessage(hdwnd,
-                         IDC_COMBO_MIC,
-                         CB_SETCURSEL,
-                         0,
-                         0L);  // Иначе там ничего не выбрано
+          IDC_COMBO_MIC,
+          CB_SETCURSEL,
+          0,
+          0L);  // Иначе там ничего не выбрано
 
       // 2.5
       if (KChFstate::flag_kc_anytime)  // Корректируем галочку в диалоге
-        SendDlgItemMessage(
-            hdwnd, IDC_CHECK_IGNORE_KC_INLINE, BM_SETCHECK, BST_UNCHECKED, 0);
+          SendDlgItemMessage(
+              hdwnd, IDC_CHECK_IGNORE_KC_INLINE, BM_SETCHECK, BST_UNCHECKED, 0);
       else
-        SendDlgItemMessage(
-            hdwnd, IDC_CHECK_IGNORE_KC_INLINE, BM_SETCHECK, BST_CHECKED, 0);
+          SendDlgItemMessage(
+              hdwnd, IDC_CHECK_IGNORE_KC_INLINE, BM_SETCHECK, BST_CHECKED, 0);
 
       // 2.6. Загружаем битмапы стрелочек
       // Вверх
       hbm_up = (HBITMAP)LoadImage(GZInst,
-                                  MAKEINTRESOURCE(IDB_BITMAP_UP),
-                                  IMAGE_BITMAP,
-                                  0,
-                                  0,
-                                  LR_DEFAULTSIZE);
+          MAKEINTRESOURCE(IDB_BITMAP_UP),
+          IMAGE_BITMAP,
+          0,
+          0,
+          LR_DEFAULTSIZE);
       SendDlgItemMessage(
           hdwnd, IDC_STATIC_BMP_UP, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hbm_up);
       // Влево
       hbm_left = (HBITMAP)LoadImage(GZInst,
-                                    MAKEINTRESOURCE(IDB_BITMAP_LEFT),
-                                    IMAGE_BITMAP,
-                                    0,
-                                    0,
-                                    LR_DEFAULTSIZE);
+          MAKEINTRESOURCE(IDB_BITMAP_LEFT),
+          IMAGE_BITMAP,
+          0,
+          0,
+          LR_DEFAULTSIZE);
       SendDlgItemMessage(hdwnd,
-                         IDC_STATIC_BMP_LEFT,
-                         STM_SETIMAGE,
-                         IMAGE_BITMAP,
-                         (LPARAM)hbm_left);
+          IDC_STATIC_BMP_LEFT,
+          STM_SETIMAGE,
+          IMAGE_BITMAP,
+          (LPARAM)hbm_left);
       // Вниз
       hbm_down = (HBITMAP)LoadImage(GZInst,
-                                    MAKEINTRESOURCE(IDB_BITMAP_DOWN),
-                                    IMAGE_BITMAP,
-                                    0,
-                                    0,
-                                    LR_DEFAULTSIZE);
+          MAKEINTRESOURCE(IDB_BITMAP_DOWN),
+          IMAGE_BITMAP,
+          0,
+          0,
+          LR_DEFAULTSIZE);
       SendDlgItemMessage(hdwnd,
-                         IDC_STATIC_BMP_DOWN,
-                         STM_SETIMAGE,
-                         IMAGE_BITMAP,
-                         (LPARAM)hbm_down);
+          IDC_STATIC_BMP_DOWN,
+          STM_SETIMAGE,
+          IMAGE_BITMAP,
+          (LPARAM)hbm_down);
       // Вправо
       hbm_right = (HBITMAP)LoadImage(GZInst,
-                                     MAKEINTRESOURCE(IDB_BITMAP_RIGHT),
-                                     IMAGE_BITMAP,
-                                     0,
-                                     0,
-                                     LR_DEFAULTSIZE);
+          MAKEINTRESOURCE(IDB_BITMAP_RIGHT),
+          IMAGE_BITMAP,
+          0,
+          0,
+          LR_DEFAULTSIZE);
       SendDlgItemMessage(hdwnd,
-                         IDC_STATIC_BMP_RIGHT,
-                         STM_SETIMAGE,
-                         IMAGE_BITMAP,
-                         (LPARAM)hbm_right);
+          IDC_STATIC_BMP_RIGHT,
+          STM_SETIMAGE,
+          IMAGE_BITMAP,
+          (LPARAM)hbm_right);
 
       // 2.7. Загружаем списки кнопок клавиатуры
       // 2. Клавиши
       for (i = 0; i < MH_NUM_SCANCODES; i++) {
-        SendDlgItemMessage(hdwnd,
-                           IDC_KBD0,
-                           CB_ADDSTRING,
-                           0,
-                           (LPARAM)(dlg_scancodes[i].stroka));
-        SendDlgItemMessage(hdwnd,
-                           IDC_KBD1,
-                           CB_ADDSTRING,
-                           0,
-                           (LPARAM)(dlg_scancodes[i].stroka));
-        SendDlgItemMessage(hdwnd,
-                           IDC_KBD2,
-                           CB_ADDSTRING,
-                           0,
-                           (LPARAM)(dlg_scancodes[i].stroka));
-        SendDlgItemMessage(hdwnd,
-                           IDC_KBD3,
-                           CB_ADDSTRING,
-                           0,
-                           (LPARAM)(dlg_scancodes[i].stroka));
-        SendDlgItemMessage(hdwnd,
-                           IDC_KBD4,
-                           CB_ADDSTRING,
-                           0,
-                           (LPARAM)(dlg_scancodes[i].stroka));
-        SendDlgItemMessage(hdwnd,
-                           IDC_KBD5,
-                           CB_ADDSTRING,
-                           0,
-                           (LPARAM)(dlg_scancodes[i].stroka));
+          SendDlgItemMessage(hdwnd,
+              IDC_KBD0,
+              CB_ADDSTRING,
+              0,
+              (LPARAM)(dlg_scancodes[i].stroka));
+          SendDlgItemMessage(hdwnd,
+              IDC_KBD1,
+              CB_ADDSTRING,
+              0,
+              (LPARAM)(dlg_scancodes[i].stroka));
+          SendDlgItemMessage(hdwnd,
+              IDC_KBD2,
+              CB_ADDSTRING,
+              0,
+              (LPARAM)(dlg_scancodes[i].stroka));
+          SendDlgItemMessage(hdwnd,
+              IDC_KBD3,
+              CB_ADDSTRING,
+              0,
+              (LPARAM)(dlg_scancodes[i].stroka));
+          SendDlgItemMessage(hdwnd,
+              IDC_KBD4,
+              CB_ADDSTRING,
+              0,
+              (LPARAM)(dlg_scancodes[i].stroka));
+          SendDlgItemMessage(hdwnd,
+              IDC_KBD5,
+              CB_ADDSTRING,
+              0,
+              (LPARAM)(dlg_scancodes[i].stroka));
       }
       SendDlgItemMessage(hdwnd, IDC_KBD0, CB_SETCURSEL, 0, 0L);
       SendDlgItemMessage(hdwnd, IDC_KBD1, CB_SETCURSEL, 0, 0L);
@@ -687,6 +699,7 @@ static BOOL CALLBACK DlgWndProc(HWND hdwnd,
       RegisterHotKey(hdwnd, 1, MOD_ALT | MOD_NOREPEAT, VK_F5);  // 0x74
 
       return 1;
+    }
 
     case WM_HOTKEY:  // В точности, как у IDOK:
       // Активация / деактивация
@@ -1100,6 +1113,21 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR cline, INT)
     flag_wav_dump = false;
     MMWAVDump::Stop();  // Именно в таком порядке
   }
+
+  // Запоминание положения окна
+  RECT rect = { NULL };
+  if (GetWindowRect(hdwnd, &rect)) 
+  {
+      int left = rect.left;
+      int top = rect.top;
+      std::ofstream fout("window.pos");
+      if (fout)
+      {
+          fout << left << std::endl << top;
+          fout.close();
+      }
+  }
+  
 
   // Чистим за собой
   KillTimer(hdwnd, 1);

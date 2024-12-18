@@ -139,7 +139,7 @@ int InputThread::OpenDevice(UINT device_num, HWND hdwnd) {
                     CALLBACK_EVENT);
   if (mres) 
   {
-      SetWindowTextA(hdwnd, "Формат записи 16кГц 16 бит НЕ поддерживается!");
+      SetWindowTextW(hdwnd, L"Формат записи 16кГц 16 бит НЕ поддерживается!");
       /*MessageBox(hdwnd,
                    L"Формат записи 16кГц 16 бит НЕ поддерживается!",
                    L"Поддержка формата",
@@ -148,7 +148,7 @@ int InputThread::OpenDevice(UINT device_num, HWND hdwnd) {
   }
   else
   {
-      SetWindowTextA(hdwnd, "Устройство записи инициализировано");
+      SetWindowTextW(hdwnd, L"Устройство записи инициализировано");
   }
 
   // 2. Добавляем буферы
