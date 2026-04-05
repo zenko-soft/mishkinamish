@@ -1,4 +1,4 @@
-﻿#ifndef __MM_INDICATORS
+#ifndef __MM_INDICATORS
 #define __MM_INDICATORS
 
 class Indicators {

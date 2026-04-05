@@ -1,4 +1,4 @@
-﻿#ifndef __MM_WAVLOADER
+#ifndef __MM_WAVLOADER
 #define __MM_WAVLOADER
 
 class MMWAVLoader {

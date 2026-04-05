@@ -1,4 +1,4 @@
-﻿#include <Windows.h>
+#include <Windows.h>
 
 #include "Indicators.h"
 #include "InputThread.h"
@@ -176,14 +176,19 @@ MHWORDChar dlg_scancodes[MH_NUM_SCANCODES] = {
 MHWORDChar dlg_scancodes[MH_NUM_SCANCODES] = {
     {L"<ничего>", 0xFFFF},  // 0
     {L"вверх", 0xE048},
-    {L"вправо", 0xE04D},
     {L"вниз", 0xE050},
-    {L"влево", 0xE04B},  // 1-4
+    {L"влево", 0xE04B},
+    {L"вправо", 0xE04D},  // 1-4
+    {L"пробел", 0x39},
+    {L"Enter", 0x1C},  // 5-6
+    {L"Левая мышь", 0xFF00},
+    {L"Средняя мышь", 0xFF02},
+    {L"Правая мышь", 0xFF01},  // 7-9
     {L"A", 0x1E},
     {L"B", 0x30},
     {L"C", 0x2E},
     {L"D", 0x20},
-    {L"E", 0x12},  // 5-9
+    {L"E", 0x12},  // 10-14
     {L"F", 0x21},
     {L"CS2 G+пробел", 0x22},
     {L"H", 0x23},
@@ -227,7 +232,6 @@ MHWORDChar dlg_scancodes[MH_NUM_SCANCODES] = {
     {L".", 0x34},
     {L"/", 0x35},
     {L"Backspace", 0x0E},
-    {L"пробел", 0x39},
     {L"TAB", 0x0F},  // 50-54
     {L"Caps Lock", 0x3A},
     {L"Левый Shift", 0x2A},
@@ -239,7 +243,6 @@ MHWORDChar dlg_scancodes[MH_NUM_SCANCODES] = {
     {L"Правый Alt", 0xE038},
     {L"Правый WIN", 0xE05C},
     {L"Menu", 0xE05D},  // 60-64
-    {L"Enter", 0x1C},
     {L"Esc", 0x01},
     {L"F1", 0x3B},
     {L"F2", 0x3C},
@@ -277,9 +280,7 @@ MHWORDChar dlg_scancodes[MH_NUM_SCANCODES] = {
     {L"Num 7", 0x47},
     {L"Num 8", 0x48},
     {L"Num 9", 0x49},  // 100-102
-    {L"Левая мышь", 0xFF00},
-    {L"Правая мышь", 0xFF01},
-    {L"Средняя мышь", 0xFF02}};
+};
 #endif
 
 //============================================================================================
@@ -567,6 +568,9 @@ static BOOL CALLBACK DlgWndProc(HWND hdwnd,
 
       for (i = 0; i < iNumDevs; i++) {
           waveInGetDevCaps(i, &wic, sizeof(WAVEINCAPS));
+          // Пропускаем виртуальные устройства Voicemeeter
+          if (wcsstr(wic.szPname, L"Voicemeeter") != NULL) continue;
+          if (wcsstr(wic.szPname, L"VB-Audio") != NULL) continue;
           SendDlgItemMessage(
               hdwnd, IDC_COMBO_MIC, CB_ADDSTRING, 0, (LPARAM)(wic.szPname));
       }

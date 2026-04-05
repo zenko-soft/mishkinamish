@@ -1,4 +1,4 @@
-﻿#ifndef __MM_WAVDUMP
+#ifndef __MM_WAVDUMP
 #define __MM_WAVDUMP
 
 class MMWAVDump {

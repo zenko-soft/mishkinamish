@@ -1,9 +1,7 @@
-﻿#ifndef __MM_INPUT_THREAD
+#ifndef __MM_INPUT_THREAD
 #define __MM_INPUT_THREAD
 
 #include "MMGlobals.h"
-
-#define MM_NUM_INPUT_BUFFERS 2
 
 class InputThread {
  public:

@@ -1,4 +1,4 @@
-﻿#ifndef __MM_OUTPUT_THREAD
+#ifndef __MM_OUTPUT_THREAD
 #define __MM_OUTPUT_THREAD
 
 #include "MMGlobals.h"

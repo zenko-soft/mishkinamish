@@ -1,4 +1,4 @@
-﻿#include <Windows.h>
+#include <Windows.h>
 
 #include <math.h>
 #include <process.h>
@@ -25,8 +25,12 @@ static volatile HANDLE hOutputSoundDataReady = NULL;  // Событие с ав�
 //==================================================
 unsigned __stdcall WaveOutThread(void *p) {
   while (!flag_ShutDownOutputThread) {
-    WaitForSingleObject(hOutputSoundDataReady, INFINITE);
-    OutputThread::OnSoundData();
+    DWORD result = WaitForSingleObject(hOutputSoundDataReady, 100);
+    if (result == WAIT_OBJECT_0) {
+      if (!flag_ShutDownOutputThread) {
+        OutputThread::OnSoundData();
+      }
+    }
   }
   return 0;
 }

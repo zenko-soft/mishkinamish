@@ -1,4 +1,4 @@
-﻿#ifndef __MM_MODEL
+#ifndef __MM_MODEL
 #define __MM_MODEL
 
 #include "GZLists.h"

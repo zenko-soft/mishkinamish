@@ -1,4 +1,4 @@
-﻿// Большая часть содрана из WAVStream, а тот из GZSamplesHolder2
+// Большая часть содрана из WAVStream, а тот из GZSamplesHolder2
 
 #include <Windows.h>
 

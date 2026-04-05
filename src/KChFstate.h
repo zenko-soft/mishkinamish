@@ -1,4 +1,4 @@
-﻿#ifndef __MM_KCFSTATE
+#ifndef __MM_KCFSTATE
 #define __MM_KCFSTATE
 
 // Конечный автомат для ловли коротких звуков (типа "к" и "ч") [18-DEC]

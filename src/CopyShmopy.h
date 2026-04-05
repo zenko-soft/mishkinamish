@@ -1,4 +1,4 @@
-﻿#ifndef __MM_COPY_SHMOPY
+#ifndef __MM_COPY_SHMOPY
 #define __MM_COPY_SHMOPY
 
 class CopyShmopy {

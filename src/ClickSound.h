@@ -1,4 +1,4 @@
-﻿#ifndef __MM_CLICKSOUND
+#ifndef __MM_CLICKSOUND
 #define __MM_CLICKSOUND
 
 #include "MMGlobals.h"

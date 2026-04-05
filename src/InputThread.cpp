@@ -1,10 +1,15 @@
-﻿#include <Windows.h>
+#include <Windows.h>
 
 #include <process.h>
 #include "InputThread.h"
 #include "OutputThread.h"
 #include "WAVLoader.h"
 #include "WorkerThread.h"
+#include "WasapiInput.h"
+
+static bool flag_wasapi_tried = false;
+static bool flag_wasapi_active = false;
+static int current_wasapi_device_index = -1;
 
 HWAVEIN InputThread::device = NULL;
 uintptr_t InputThread::input_thread_handle = NULL;
@@ -37,8 +42,12 @@ extern volatile bool
 //==================================================
 unsigned __stdcall WaveInThread(void *p) {
   while (!flag_ShutDownInputThread) {
-    WaitForSingleObject(hInputSoundDataReady, INFINITE);
-    InputThread::OnSoundData();
+    DWORD result = WaitForSingleObject(hInputSoundDataReady, 100);
+    if (result == WAIT_OBJECT_0) {
+      if (!flag_ShutDownInputThread) {
+        InputThread::OnSoundData();
+      }
+    }
   }
   return 0;
 }
@@ -49,18 +58,46 @@ unsigned __stdcall WaveInThread(void *p) {
 // HWND нужно для привязки сообщений об ошибках к родительскому окну
 //===============================================================================
 int InputThread::Start(UINT device_num, HWND hdwnd) {
-  // 1. Запустим поток, если не сделали это раньше..
-  // 1.1. Событие создадим
+  // 1. Пробуем WASAPI (лучше для Windows 10/11 и USB устройств)
+  if (!flag_wasapi_tried) {
+    flag_wasapi_tried = true;
+    if (WasapiInput::Init()) {
+      WasapiInput::Start(NULL);
+      if (WasapiInput::IsActive()) {
+        flag_wasapi_active = true;
+        if (hdwnd) {
+          SetWindowTextW(hdwnd, L"WASAPI: Устройство записи инициализировано");
+        }
+        return 0;
+      } else {
+        WasapiInput::Cleanup();
+      }
+    }
+  }
+
+  if (flag_wasapi_active) {
+    WasapiInput::Stop();
+    WasapiInput::Start(NULL);
+    if (WasapiInput::IsActive()) {
+      return 0;
+    }
+  }
+
+  // 2. Fallback на MME
+  flag_wasapi_active = false;
+
+  // 2.1. Запустим поток, если не сделали это раньше..
+  // 2.1.1. Событие создадим
   if (!hInputSoundDataReady) {
     hInputSoundDataReady = CreateEvent(0, FALSE, FALSE, 0);
   }
 
-  // 1.2. Сам поток
+  // 2.1.2. Сам поток
   if (!input_thread_handle) {
     input_thread_handle = _beginthreadex(NULL, 0, WaveInThread, 0, 0, NULL);
   }
 
-  // 2. Если использовали устройство - закончить его использовать
+  // 2.2. Если использовали устройство - закончить его использовать
   if (device) {
     CleanUpDevice(hdwnd);
     device = NULL;  // CleanUpDevice это делает, но перестрахуемся...
@@ -197,42 +234,29 @@ void InputThread::CleanUpDevice(HWND hdwnd) {
   int i;
 
   if (device) {
-    // Первым делом нужно, чтобы поток, который возвращает буферы в работу,
-    // перестал это делать!
     flag_DoNotAddBuffers = true;
 
-    // The waveInReset function stops input on the given waveform-audio input
-    // device and resets the current position to zero. All pending buffers are
-    // marked as done and returned to the application.
+    HANDLE hThread = (HANDLE)input_thread_handle;
+    if (hThread) {
+        SetEvent(hInputSoundDataReady);
+        WaitForSingleObject(hThread, 500);
+    }
+
     mres = waveInReset(device);
-    if (mres)
-      MessageBox(hdwnd,
-                 L"не отработал waveInReset",
-                 L"не отработал waveInReset",
-                 MB_OK);
+#ifdef _DEBUG
+    if (mres) OutputDebugStringA("waveInReset failed\n");
+#endif
 
-    // waveInStop(device);
-
-    // Буферов 2, но... вдруг больше будет
     for (i = 0; i < MM_NUM_INPUT_BUFFERS; i++) {
       mres = waveInUnprepareHeader(device, &WaveHeader[i], sizeof(WAVEHDR));
-      if (mres)
-        MessageBox(hdwnd,
-                   L"не отработал waveInUnprepareHeader",
-                   L"не отработал waveInUnprepareHeader",
-                   MB_OK);
     }
 
     mres = waveInClose(device);
-    if (mres)
-      MessageBox(hdwnd,
-                 L"не отработал waveInClose",
-                 L"не отработал waveInClose",
-                 MB_OK);
+#ifdef _DEBUG
+    if (mres) OutputDebugStringA("waveInClose failed\n");
+#endif
 
-    // Теперь уже можно снова добавлять
     flag_DoNotAddBuffers = false;
-
     device = NULL;
   }
 }
@@ -279,19 +303,25 @@ void InputThread::OnSoundData() {
 // Выключить все электроприборы перед выходом из программы
 //===============================================================================
 void InputThread::Halt(HWND hdwnd) {
-  // 1. Закончим получать данные от звуковой карты
+  if (flag_wasapi_active) {
+    WasapiInput::Stop();
+    WasapiInput::Cleanup();
+    flag_wasapi_active = false;
+    flag_wasapi_tried = false;
+  }
+
   CleanUpDevice(hdwnd);
 
-  // 2. Завершим поток
   flag_ShutDownInputThread = true;
-  // А вдруг он ждёт своего события?
   SetEvent(hInputSoundDataReady);
 
-  // 3. Отключим хендл
-  CloseHandle(hInputSoundDataReady);
-  hInputSoundDataReady = NULL;
+  if (hInputSoundDataReady) {
+    CloseHandle(hInputSoundDataReady);
+    hInputSoundDataReady = NULL;
+  }
 
-  // 4. Для очистки совести дождёмся окончания потока?
-  WaitForSingleObject((HANDLE)input_thread_handle, 0);
-  input_thread_handle = NULL;
+  if (input_thread_handle) {
+    WaitForSingleObject((HANDLE)input_thread_handle, 500);
+    input_thread_handle = NULL;
+  }
 }

@@ -1,4 +1,4 @@
-﻿#include <Windows.h>
+#include <Windows.h>
 
 #include <gl/GL.h>
 #include <stdio.h>
